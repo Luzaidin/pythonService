@@ -29,10 +29,14 @@ dist\myservice.exe remove
 
 import time
 import sys
+import logging
+
 
 import win32serviceutil  # ServiceFramework and commandline helper
 import win32service  # Events
 import servicemanager  # Simple setup and logging
+
+logging.basicConfig(level=logging.INFO, filename=${logPath}, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 
 class MyService:
     """Silly little application stub"""
@@ -43,9 +47,13 @@ class MyService:
     def run(self):
         """Main service loop. This is where work is done!"""
         self.running = True
+        i = 0
         while self.running:
             time.sleep(10)  # Important work
-            servicemanager.LogInfoMsg("Service running...")
+            logging.info('Add log')
+            i += 1
+            if i == 10:
+                self.running = False
 
 
 class MyServiceFramework(win32serviceutil.ServiceFramework):
