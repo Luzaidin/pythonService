@@ -5,6 +5,22 @@ from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 from email.header import Header
 import io
+import os
+import helper
+
+from dotenv import load_dotenv
+
+config = helper.read_config()
+EMAIL_SUBJECT = config['Email']['EmailSubject'],
+EMAIL_TEMPLATE = config['Email']['EmailTemplate'],
+EMAIL_LOGO = config['Email']['EmailLogo']
+
+load_dotenv() 
+
+EMAIL_PORT = os.getenv('EMAIL_PORT')
+EMAIL_LOGIN = os.getenv('EMAIL_LOGIN')
+EMAIL_PASSWORD = os.getenv('EMAIL_PASSWORD')
+EMAIL_RECEIVER = os.getenv('EMAIL_RECEIVER')
 
 class EmailSender():
 
@@ -36,7 +52,10 @@ class EmailSender():
         msg['From'] = self.fromaddr
         msg['To'] = recipients
         msg['Subject'] = Header(subject, 'utf-8')
-        msg.attach(MIMEText(message.strip(), 'html','utf-8'))
+
+        with open(message, 'r') as plainHTML:
+            html = plainHTML.read()  
+        msg.attach(MIMEText(html, 'html'))
 
         msgImage = None
         with io.open(logo, 'rb') as fp:
@@ -49,12 +68,7 @@ class EmailSender():
         return msg
     
     def setup_security(self, smtp):
-        def is_tls(port):
-            return '587' == port
-        if is_tls(self.get_smtp_port()):
-            smtp.ehlo() 
-            smtp.starttls()
-            smtp.ehlo()
+        smtp.starttls()
         if self.user and self.password:
             smtp.login(self.user, self.password)
 
@@ -64,4 +78,6 @@ class EmailSender():
         smtp = self.create_smtp()
         self.setup_security(smtp)
         smtp.sendmail(self.fromaddr, recipients.split(';'), msg.as_string())
-        smtp.quit()
+
+sender = EmailSender(host='smtp.gmail.com', port=EMAIL_PORT, fromaddr=EMAIL_LOGIN, user=EMAIL_LOGIN, password=EMAIL_PASSWORD)
+sender.send(EMAIL_RECEIVER, EMAIL_SUBJECT, EMAIL_TEMPLATE, EMAIL_LOGO)
